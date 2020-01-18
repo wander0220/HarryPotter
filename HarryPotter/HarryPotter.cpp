@@ -3,6 +3,13 @@
 
 #include "framework.h"
 #include "HarryPotter.h"
+#include <d3d9.h>
+#include <d3dx9.h>
+
+#pragma comment (lib,"d3d9.lib")
+#pragma comment (lib,"d3dx9.lib")
+#pragma comment (lib,"dinput8.lib")
+#pragma comment (lib,"dxguid.lib");
 
 #define MAX_LOADSTRING 100
 
@@ -13,9 +20,14 @@ WCHAR szWindowClass[MAX_LOADSTRING];            // 기본 창 클래스 이름�
 
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
-BOOL                InitInstance(HINSTANCE, int);
+BOOL                InitInstance(HINSTANCE, int, HWND);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+
+LPDIRECT3D9 g_pD3D;
+LPDIRECT3DDEVICE9 g_pD3DDevice;
+D3DCOLOR g_ClearColor = D3DCOLOR_XRGB(0, 0, 255);
+DWORD g_dwPrevTime = 0L;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -32,24 +44,27 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     LoadStringW(hInstance, IDC_HARRYPOTTER, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
 
+	HWND hWnd = NULL;
+
     // 애플리케이션 초기화를 수행합니다:
-    if (!InitInstance (hInstance, nCmdShow))
+    if (!InitInstance (hInstance, nCmdShow, hWnd))
     {
         return FALSE;
     }
-
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_HARRYPOTTER));
 
     MSG msg;
 
     // 기본 메시지 루프입니다:
     while (GetMessage(&msg, nullptr, 0, 0))
     {
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+		if(PeekMessage(&msg,NULL,0,0,PM_REMOVE))
         {
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
+		else {
+
+		}
     }
 
     return (int) msg.wParam;
@@ -84,7 +99,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 }
 
 //
-//   함수: InitInstance(HINSTANCE, int)
+//   함수: InitInstance(HINSTANCE, int,HWND)
 //
 //   용도: 인스턴스 핸들을 저장하고 주 창을 만듭니다.
 //
@@ -93,11 +108,11 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 //        이 함수를 통해 인스턴스 핸들을 전역 변수에 저장하고
 //        주 프로그램 창을 만든 다음 표시합니다.
 //
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
+BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, HWND hWnd)
 {
    hInst = hInstance; // 인스턴스 핸들을 전역 변수에 저장합니다.
 
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+   hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
@@ -125,31 +140,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
-    case WM_COMMAND:
-        {
-            int wmId = LOWORD(wParam);
-            // 메뉴 선택을 구문 분석합니다:
-            switch (wmId)
-            {
-            case IDM_ABOUT:
-                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-                break;
-            case IDM_EXIT:
-                DestroyWindow(hWnd);
-                break;
-            default:
-                return DefWindowProc(hWnd, message, wParam, lParam);
-            }
-        }
-        break;
-    case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: 여기에 hdc를 사용하는 그리기 코드를 추가합니다...
-            EndPaint(hWnd, &ps);
-        }
-        break;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
