@@ -29,6 +29,11 @@ LPDIRECT3DDEVICE9 g_pD3DDevice;
 D3DCOLOR g_ClearColor = D3DCOLOR_XRGB(0, 0, 255);
 DWORD g_dwPrevTime = 0L;
 
+
+//함수ZONE
+void ReleaseDirect3D();
+bool InitDirect3D(HWND hwnd);
+
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
                      _In_ LPWSTR    lpCmdLine,
@@ -53,6 +58,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     }
 
     MSG msg;
+	ZeroMemory(&msg, sizeof(msg));
 
     // 기본 메시지 루프입니다:
     while (GetMessage(&msg, nullptr, 0, 0))
@@ -69,8 +75,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     return (int) msg.wParam;
 }
-
-
 
 //
 //  함수: MyRegisterClass()
@@ -119,6 +123,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, HWND hWnd)
    {
       return FALSE;
    }
+   InitDirect3D(hWnd);
 
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
@@ -167,4 +172,48 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     return (INT_PTR)FALSE;
+}
+
+
+void ReleaseDirect3D() {
+	if (g_pD3DDevice != NULL) g_pD3DDevice->Release();
+	if (g_pD3D != NULL) g_pD3D->Release();
+
+	g_pD3DDevice = NULL;
+	g_pD3D = NULL;
+}
+bool InitDirect3D(HWND hwnd) {
+	g_pD3D = Direct3DCreate9(D3D_SDK_VERSION);
+
+	if (g_pD3D == NULL) return false;
+
+	D3DPRESENT_PARAMETERS d3dpp;
+	ZeroMemory(&d3dpp, sizeof(d3dpp));
+
+	d3dpp.Windowed = TRUE;
+	d3dpp.hDeviceWindow = hwnd;
+	d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+	d3dpp.BackBufferFormat = D3DFMT_UNKNOWN;
+	d3dpp.BackBufferCount = 1;
+	d3dpp.BackBufferWidth = 640;
+	d3dpp.BackBufferHeight = 480;
+
+	if (g_pD3D->CreateDevice(D3DADAPTER_DEFAULT
+		, D3DDEVTYPE_HAL
+		, hwnd
+		, D3DCREATE_HARDWARE_VERTEXPROCESSING
+		, &d3dpp
+		, &g_pD3DDevice) == E_FAIL)
+		return false;
+
+	return true;
+}
+void Render() {
+	if (g_pD3DDevice == NULL) return;
+	g_pD3DDevice->Clear(0, NULL, D3DCLEAR_TARGET, g_ClearColor, 1.0f, 0);
+
+	if (SUCCEEDED(g_pD3DDevice->BeginScene())) {
+		g_pD3DDevice->EndScene();
+	}
+	g_pD3DDevice->Present(NULL, NULL, NULL, NULL);
 }
